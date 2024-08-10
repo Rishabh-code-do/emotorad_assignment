@@ -19,7 +19,7 @@ This Django project provides an API endpoint to identify and merge contact infor
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/yourusername/contact-identification-api.git
-   cd contact-identification-api
+   cd emotorad_assignment
 
 2. **Apply Migrations:**:
    ```bash
