@@ -9,26 +9,31 @@ import re
 
 logger = logging.getLogger(__name__)
 
-@csrf_exempt
-@transaction.atomic
+@csrf_exempt # Disable CSRF protection for this view
+@transaction.atomic  # Ensure that database operations within this view are atomic
 def identify(request):
     try:
         if request.method == 'POST':
-            data = json.loads(request.body)
+            data = json.loads(request.body)  # Parse JSON request body
             email = data.get('email')
             email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
+            # Validate email format if provided
             if email and not re.match(email_regex, email):
                 return JsonResponse({"error": "Incorrect contact information provided.(email)"}, status=400)
             
             phone_number = data.get('phoneNumber')
             number_regex = r'^[6-9]\d{9}$'
             
+            # Validate phone number format if provided
             if phone_number and not re.match(number_regex, phone_number):
                 return JsonResponse({"error": "Incorrect contact information provided.(phone_number)"}, status=400)
 
+            # Ensure at least one contact method is provided
             if not email and not phone_number:
                 return JsonResponse({"error": "Insufficient contact information provided."}, status=400)
+            
+             # Process the contact information and return the result
             response_data = merge_and_return_contact(email, phone_number)
             return JsonResponse(response_data, status=200)
         else:
@@ -41,6 +46,7 @@ def merge_and_return_contact(email, phone):
     primary_contact = None
     secondary_contact = None
 
+    # Try to find a primary contact using both email and phone
     if phone and email:
         primary_contact = Contact.objects.filter(email=email,phone_number=phone, link_precedence='primary').last()
     if primary_contact:
@@ -50,13 +56,14 @@ def merge_and_return_contact(email, phone):
             "emails": emails,
             "phoneNumbers": phone_numbers,
             "secondaryContactIds": secondary_contact_ids}
-
+    
+    # If no primary contact found, search using phone or email individually
     if phone:
         primary_contact = Contact.objects.filter(phone_number=phone, link_precedence='primary').last()
     if not primary_contact and email:
         primary_contact = Contact.objects.filter(email=email, link_precedence='primary').last()
     
-    
+    # If a primary contact is found, create or retrieve a secondary contact
     if primary_contact:
         secondary_contact = Contact.objects.filter(email=email,phone_number=phone,link_precedence='secondary', linked_contact_id=primary_contact.id).last()
         if not secondary_contact:
@@ -82,6 +89,7 @@ def merge_and_return_contact(email, phone):
             "phoneNumbers": phone_numbers,
             "secondaryContactIds": secondary_contact_ids}
     else:
+        # If no existing contacts are found, create a new primary contact
         new_contact = Contact.objects.create(phone_number=phone,email=email,link_precedence='primary',linked_contact=None)
         emails = [new_contact.email] if new_contact and new_contact.email else []
         phone_numbers = [new_contact.phone_number] if new_contact and new_contact.phone_number else []
