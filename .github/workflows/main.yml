@@ -1,23 +1,25 @@
 name: Multi-Environment CI/CD Pipeline
 
-# Trigger only via manual dispatch, but allow branch filtering
+# Trigger on push and manual dispatch
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Select the environment to deploy to (dev, stage, prod)'
+        description: "Select the environment to deploy to (dev,prod)"
         required: true
-        default: 'dev'
+        default: "dev"
         type: choice
         options:
           - dev
-          - stage
           - prod
-    # Restrict workflow to specific branches
-    branches:
-      - dev        # For dev environment
-      - stage      # For stage environment
-      - prod       # For prod environment
+      branch:
+        description: "Select the branch to deploy from (dev,main)"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - master
 
 jobs:
   selective-build-and-deploy:
