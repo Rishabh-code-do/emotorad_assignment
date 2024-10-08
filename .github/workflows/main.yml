@@ -1,6 +1,6 @@
 name: Multi-Environment CI/CD Pipeline
 
-# Trigger only via manual dispatch
+# Trigger only via manual dispatch, but allow branch filtering
 on:
   workflow_dispatch:
     inputs:
@@ -13,6 +13,11 @@ on:
           - dev
           - stage
           - prod
+    # Restrict workflow to specific branches
+    branches:
+      - dev        # For dev environment
+      - stage      # For stage environment
+      - prod       # For prod environment
 
 jobs:
   selective-build-and-deploy:
@@ -23,6 +28,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Output
+      # Step 2: Set Environment Variables Based on User Input
       - name: Set Environment Variables
         run: echo "hello world"
